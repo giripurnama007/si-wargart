@@ -235,9 +235,13 @@ class SuratController {
                     if (!is_dir($qrDir)) {
                         mkdir($qrDir, 0755, true);
                     }
+                    
                     $qrFile = 'qr_surat_' . time() . '_' . $id . '.png';
                     $qrPath = $qrDir . $qrFile;
-                    $qrData = "No. Surat: {$no_surat}\nNIK: {$warga['nik']}\nNama: {$warga['nama_lengkap']}\nJenis: {$surat['jenis_surat']}";
+                    $signerName = $_SESSION['nama']; // Nama user yang menyetujui
+                    $approvalDateTime = date('Y-m-d H:i:s'); // Waktu persetujuan
+
+                    $qrData = "No. Surat: {$no_surat}\nNIK: {$warga['nik']}\nNama: {$warga['nama_lengkap']}\nJenis: {$surat['jenis_surat']}\nDisetujui Oleh: {$signerName}\nPada: {$approvalDateTime}";
                     QRcode::png($qrData, $qrPath, QR_ECLEVEL_L, 3);
                 } else {
                     $qrFile = null; // Set to null if library is not found

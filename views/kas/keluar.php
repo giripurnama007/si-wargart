@@ -9,7 +9,7 @@
         <h3 class="card-title">Tambah Kas Keluar</h3>
     </div>
 
-    <form action="<?= nginx_url('kas/proses_keluar') ?>" method="POST" enctype="multipart/form-data">
+     <form action="<?= nginx_url('kas/proses_keluar') ?>" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
 
         <div class="card-body">

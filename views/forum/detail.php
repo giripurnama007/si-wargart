@@ -13,6 +13,14 @@
         </div>
         <div class="card-tools">
             <?php if (hasRole(['admin', 'ketua_rt'])): ?>
+                <?php
+                $archive_text = ($topik['status'] === 'Published') ? 'Tutup Topik' : 'Buka Kembali';
+                $archive_icon = ($topik['status'] === 'Published') ? 'fa-lock' : 'fa-lock-open';
+                $archive_class = ($topik['status'] === 'Published') ? 'warning' : 'info';
+                ?>
+                <a href="<?= route_url('forum/archive', ['id' => $topik['id']]) ?>" class="btn btn-tool text-<?= $archive_class ?>" title="<?= $archive_text ?>">
+                    <i class="fas <?= $archive_icon ?>"></i>
+                </a>
                 <a href="#" onclick="confirmDelete('<?= route_url('forum/hapus', ['id' => $topik['id']]) ?>', 'Yakin menghapus topik diskusi ini?')" class="btn btn-tool text-danger" title="Hapus Topik">
                     <i class="fas fa-trash"></i>
                 </a>
@@ -54,7 +62,7 @@
     
     <!-- Form Kirim Komentar -->
     <div class="card-footer">
-        <?php if ($topik['status'] === 'Open'): ?>
+        <?php if ($topik['status'] === 'Published'): ?>
             <form action="<?= nginx_url('forum/proses_komentar') ?>" method="post">
                 <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
                 <input type="hidden" name="id_topik" value="<?= $topik['id'] ?>">
@@ -72,8 +80,8 @@
                 </div>
             </form>
         <?php else: ?>
-            <div class="text-center text-danger">
-                <i class="fas fa-lock mr-1"></i> Topik diskusi ini telah ditutup.
+            <div class="alert alert-warning text-center mb-0">
+                <i class="fas fa-lock mr-1"></i> Diskusi ini telah ditutup. Anda tidak dapat mengirim balasan baru.
             </div>
         <?php endif; ?>
     </div>

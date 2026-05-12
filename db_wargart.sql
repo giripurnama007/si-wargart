@@ -26,7 +26,7 @@ CREATE TABLE `users` (
   `email` VARCHAR(100) DEFAULT NULL,
   `no_hp` VARCHAR(20) DEFAULT NULL,
   `role` ENUM('admin', 'ketua_rt', 'warga') NOT NULL DEFAULT 'warga',
-  `id_warga` INT(11) DEFAULT NULL,
+  `id_warga` VARCHAR(20) DEFAULT NULL,
   `foto` VARCHAR(255) DEFAULT 'default.png',
   `is_active` TINYINT(1) NOT NULL DEFAULT 1,
   `last_login` DATETIME DEFAULT NULL,
@@ -110,7 +110,7 @@ CREATE TABLE `jenis_iuran` (
 DROP TABLE IF EXISTS `tagihan_iuran`;
 CREATE TABLE `tagihan_iuran` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
-  `id_warga` INT(11) NOT NULL,
+  `id_warga` VARCHAR(20) NOT NULL,
   `id_jenis_iuran` INT(11) NOT NULL,
   `bulan` VARCHAR(7) NOT NULL,
   `jumlah` DECIMAL(12,2) NOT NULL,
@@ -132,7 +132,7 @@ DROP TABLE IF EXISTS `pembayaran`;
 CREATE TABLE `pembayaran` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
   `id_tagihan` INT(11) NOT NULL,
-  `id_warga` INT(11) NOT NULL,
+  `id_warga` VARCHAR(20) NOT NULL,
   `jumlah_bayar` DECIMAL(12,2) NOT NULL,
   `tanggal_bayar` DATE NOT NULL,
   `metode_bayar` ENUM('Cash', 'Transfer', 'E-Wallet') DEFAULT 'Transfer',
@@ -214,19 +214,17 @@ CREATE TABLE `kegiatan` (
 DROP TABLE IF EXISTS `surat_pengantar`;
 CREATE TABLE `surat_pengantar` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
-  `id_warga` INT(11) NOT NULL,
+  `id_warga` VARCHAR(20) NOT NULL,
   `jenis_surat` ENUM('Surat Domisili', 'Surat Keterangan', 'Surat Usaha', 'Surat Pengantar Nikah') NOT NULL,
   `keperluan` TEXT NOT NULL,
   `tanggal_pengajuan` DATE NOT NULL,
-  `status` ENUM('Draft', 'Pending', 'Approved_Ketua', 'Approved_Admin', 'Rejected', 'Selesai') DEFAULT 'Draft',
+  `status` ENUM('Draft', 'Pending', 'Rejected', 'Selesai') DEFAULT 'Draft',
   `keterangan` TEXT DEFAULT NULL,
   `no_surat` VARCHAR(50) DEFAULT NULL,
   `qrcode` VARCHAR(255) DEFAULT NULL,
   `file_surat` VARCHAR(255) DEFAULT NULL,
   `approved_by_ketua` INT(11) DEFAULT NULL,
   `approved_at_ketua` DATETIME DEFAULT NULL,
-  `approved_by_admin` INT(11) DEFAULT NULL,
-  `approved_at_admin` DATETIME DEFAULT NULL,
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -241,7 +239,7 @@ CREATE TABLE `surat_pengantar` (
 DROP TABLE IF EXISTS `pengaduan`;
 CREATE TABLE `pengaduan` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
-  `id_warga` INT(11) NOT NULL,
+  `id_warga` VARCHAR(20) NOT NULL,
   `judul` VARCHAR(200) NOT NULL,
   `isi` TEXT NOT NULL,
   `kategori` ENUM('Kebersihan', 'Keamanan', 'Fasilitas', 'Lingkungan', 'Lainnya') DEFAULT 'Lainnya',
@@ -312,7 +310,6 @@ CREATE TABLE `forum_topik` (
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `id_user` (`id_user`),
-  KEY `id_warga` (`id_warga`),
   KEY `created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -353,19 +350,18 @@ CREATE TABLE `activity_log` (
 -- =====================================================
 -- Foreign Keys
 -- =====================================================
-ALTER TABLE `users` ADD FOREIGN KEY (`id_warga`) REFERENCES `warga`(`id`) ON DELETE SET NULL;
-ALTER TABLE `tagihan_iuran` ADD FOREIGN KEY (`id_warga`) REFERENCES `warga`(`id`) ON DELETE CASCADE;
+ALTER TABLE `users` ADD FOREIGN KEY (`id_warga`) REFERENCES `warga`(`nik`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `tagihan_iuran` ADD FOREIGN KEY (`id_warga`) REFERENCES `warga`(`nik`) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE `tagihan_iuran` ADD FOREIGN KEY (`id_jenis_iuran`) REFERENCES `jenis_iuran`(`id`) ON DELETE CASCADE;
 ALTER TABLE `pembayaran` ADD FOREIGN KEY (`id_tagihan`) REFERENCES `tagihan_iuran`(`id`) ON DELETE CASCADE;
-ALTER TABLE `pembayaran` ADD FOREIGN KEY (`id_warga`) REFERENCES `warga`(`id`) ON DELETE CASCADE;
+ALTER TABLE `pembayaran` ADD FOREIGN KEY (`id_warga`) REFERENCES `warga`(`nik`) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE `pembayaran` ADD FOREIGN KEY (`verified_by`) REFERENCES `users`(`id`) ON DELETE SET NULL;
 ALTER TABLE `kas_rt` ADD FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON DELETE SET NULL;
 ALTER TABLE `pengumuman` ADD FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON DELETE SET NULL;
 ALTER TABLE `kegiatan` ADD FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON DELETE SET NULL;
-ALTER TABLE `surat_pengantar` ADD FOREIGN KEY (`id_warga`) REFERENCES `warga`(`id`) ON DELETE CASCADE;
+ALTER TABLE `surat_pengantar` ADD FOREIGN KEY (`id_warga`) REFERENCES `warga`(`nik`) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE `surat_pengantar` ADD FOREIGN KEY (`approved_by_ketua`) REFERENCES `users`(`id`) ON DELETE SET NULL;
-ALTER TABLE `surat_pengantar` ADD FOREIGN KEY (`approved_by_admin`) REFERENCES `users`(`id`) ON DELETE SET NULL;
-ALTER TABLE `pengaduan` ADD FOREIGN KEY (`id_warga`) REFERENCES `warga`(`id`) ON DELETE CASCADE;
+ALTER TABLE `pengaduan` ADD FOREIGN KEY (`id_warga`) REFERENCES `warga`(`nik`) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE `pengaduan` ADD FOREIGN KEY (`respon_by`) REFERENCES `users`(`id`) ON DELETE SET NULL;
 ALTER TABLE `notifikasi` ADD FOREIGN KEY (`id_user`) REFERENCES `users`(`id`) ON DELETE CASCADE;
 ALTER TABLE `activity_log` ADD FOREIGN KEY (`id_user`) REFERENCES `users`(`id`) ON DELETE SET NULL;
@@ -382,10 +378,10 @@ INSERT INTO `pengaturan` (`nama_aplikasi`, `alamat`, `no_telepon`, `email`, `nam
 ('SI-WargaRT', 'Jl. Merdeka No. 1, Kelurahan Sukamaju, Kecamatan Sukasari', '021-12345678', 'info@siwargart.com', 'RT 01', 'RW 01', 'Budi Santoso');
 
 -- Insert Users Default (password: admin123, ketua123, warga123)
-INSERT INTO `users` (`username`, `password`, `nama`, `email`, `no_hp`, `role`, `is_active`) VALUES
-('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Administrator', 'admin@siwargart.com', '081234567890', 'admin', 1),
-('ketua', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Budi Santoso', 'ketua@siwargart.com', '081234567891', 'ketua_rt', 1),
-('warga', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Ahmad Wijaya', 'warga@siwargart.com', '081234567892', 'warga', 1);
+INSERT INTO `users` (`username`, `password`, `nama`, `email`, `no_hp`, `role`, `is_active`, `id_warga`) VALUES
+('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Administrator', 'admin@siwargart.com', '081234567890', 'admin', 1, NULL),
+('ketua', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Budi Santoso', 'ketua@siwargart.com', '081234567891', 'ketua_rt', 1, NULL),
+('warga', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Ahmad Wijaya', 'warga@siwargart.com', '081234567892', 'warga', 1, NULL);
 
 -- Update password dengan hash bcrypt yang benar
 -- UPDATE `users` SET `password` = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi' WHERE `username` = 'admin';
@@ -422,49 +418,49 @@ INSERT INTO `kartu_keluarga` (`no_kk`, `nik_kepala`, `nama_kepala`, `alamat`, `r
 
 -- Insert Tagihan Iuran
 INSERT INTO `tagihan_iuran` (`id_warga`, `id_jenis_iuran`, `bulan`, `jumlah`, `status`, `tanggal_jatuh_tempo`) VALUES
-(1, 1, '2026-01', 25000.00, 'Lunas', '2026-01-31'),
-(1, 2, '2026-01', 30000.00, 'Lunas', '2026-01-31'),
-(1, 3, '2026-01', 50000.00, 'Lunas', '2026-01-31'),
-(1, 4, '2026-01', 10000.00, 'Lunas', '2026-01-31'),
-(1, 1, '2026-02', 25000.00, 'Lunas', '2026-02-28'),
-(1, 2, '2026-02', 30000.00, 'Lunas', '2026-02-28'),
-(1, 3, '2026-02', 50000.00, 'Lunas', '2026-02-28'),
-(1, 4, '2026-02', 10000.00, 'Lunas', '2026-02-28'),
-(1, 1, '2026-03', 25000.00, 'Lunas', '2026-03-31'),
-(1, 2, '2026-03', 30000.00, 'Lunas', '2026-03-31'),
-(1, 3, '2026-03', 50000.00, 'Lunas', '2026-03-31'),
-(1, 4, '2026-03', 10000.00, 'Lunas', '2026-03-31'),
-(2, 1, '2026-01', 25000.00, 'Lunas', '2026-01-31'),
-(2, 2, '2026-01', 30000.00, 'Lunas', '2026-01-31'),
-(2, 3, '2026-01', 50000.00, 'Lunas', '2026-01-31'),
-(2, 4, '2026-01', 10000.00, 'Lunas', '2026-01-31'),
-(3, 1, '2026-04', 25000.00, 'Menunggak', '2026-04-30'),
-(3, 2, '2026-04', 30000.00, 'Menunggak', '2026-04-30'),
-(3, 3, '2026-04', 50000.00, 'Menunggak', '2026-04-30'),
-(3, 4, '2026-04', 10000.00, 'Menunggak', '2026-04-30'),
-(4, 1, '2026-04', 25000.00, 'Pending', '2026-04-30'),
-(4, 2, '2026-04', 30000.00, 'Pending', '2026-04-30'),
-(4, 3, '2026-04', 50000.00, 'Pending', '2026-04-30'),
-(4, 4, '2026-04', 10000.00, 'Pending', '2026-04-30');
+('3201234567890001', 1, '2026-01', 25000.00, 'Lunas', '2026-01-31'),
+('3201234567890001', 2, '2026-01', 30000.00, 'Lunas', '2026-01-31'),
+('3201234567890001', 3, '2026-01', 50000.00, 'Lunas', '2026-01-31'),
+('3201234567890001', 4, '2026-01', 10000.00, 'Lunas', '2026-01-31'),
+('3201234567890001', 1, '2026-02', 25000.00, 'Lunas', '2026-02-28'),
+('3201234567890001', 2, '2026-02', 30000.00, 'Lunas', '2026-02-28'),
+('3201234567890001', 3, '2026-02', 50000.00, 'Lunas', '2026-02-28'),
+('3201234567890001', 4, '2026-02', 10000.00, 'Lunas', '2026-02-28'),
+('3201234567890001', 1, '2026-03', 25000.00, 'Lunas', '2026-03-31'),
+('3201234567890001', 2, '2026-03', 30000.00, 'Lunas', '2026-03-31'),
+('3201234567890001', 3, '2026-03', 50000.00, 'Lunas', '2026-03-31'),
+('3201234567890001', 4, '2026-03', 10000.00, 'Lunas', '2026-03-31'),
+('3201234567890002', 1, '2026-01', 25000.00, 'Lunas', '2026-01-31'),
+('3201234567890002', 2, '2026-01', 30000.00, 'Lunas', '2026-01-31'),
+('3201234567890002', 3, '2026-01', 50000.00, 'Lunas', '2026-01-31'),
+('3201234567890002', 4, '2026-01', 10000.00, 'Lunas', '2026-01-31'),
+('3201234567890003', 1, '2026-04', 25000.00, 'Menunggak', '2026-04-30'),
+('3201234567890003', 2, '2026-04', 30000.00, 'Menunggak', '2026-04-30'),
+('3201234567890003', 3, '2026-04', 50000.00, 'Menunggak', '2026-04-30'),
+('3201234567890003', 4, '2026-04', 10000.00, 'Menunggak', '2026-04-30'),
+('3201234567890004', 1, '2026-04', 25000.00, 'Pending', '2026-04-30'),
+('3201234567890004', 2, '2026-04', 30000.00, 'Pending', '2026-04-30'),
+('3201234567890004', 3, '2026-04', 50000.00, 'Pending', '2026-04-30'),
+('3201234567890004', 4, '2026-04', 10000.00, 'Pending', '2026-04-30');
 
 -- Insert Pembayaran
 INSERT INTO `pembayaran` (`id_tagihan`, `id_warga`, `jumlah_bayar`, `tanggal_bayar`, `metode_bayar`, `status`) VALUES
-(1, 1, 25000.00, '2026-01-05', 'Transfer', 'Verified'),
-(2, 1, 30000.00, '2026-01-05', 'Transfer', 'Verified'),
-(3, 1, 50000.00, '2026-01-05', 'Transfer', 'Verified'),
-(4, 1, 10000.00, '2026-01-05', 'Transfer', 'Verified'),
-(5, 1, 25000.00, '2026-02-03', 'Transfer', 'Verified'),
-(6, 1, 30000.00, '2026-02-03', 'Transfer', 'Verified'),
-(7, 1, 50000.00, '2026-02-03', 'Transfer', 'Verified'),
-(8, 1, 10000.00, '2026-02-03', 'Transfer', 'Verified'),
-(9, 1, 25000.00, '2026-03-01', 'Transfer', 'Verified'),
-(10, 1, 30000.00, '2026-03-01', 'Transfer', 'Verified'),
-(11, 1, 50000.00, '2026-03-01', 'Transfer', 'Verified'),
-(12, 1, 10000.00, '2026-03-01', 'Transfer', 'Verified'),
-(13, 2, 25000.00, '2026-01-10', 'Cash', 'Verified'),
-(14, 2, 30000.00, '2026-01-10', 'Cash', 'Verified'),
-(15, 2, 50000.00, '2026-01-10', 'Cash', 'Verified'),
-(16, 2, 10000.00, '2026-01-10', 'Cash', 'Verified');
+('1', '3201234567890001', 25000.00, '2026-01-05', 'Transfer', 'Verified'),
+('2', '3201234567890001', 30000.00, '2026-01-05', 'Transfer', 'Verified'),
+('3', '3201234567890001', 50000.00, '2026-01-05', 'Transfer', 'Verified'),
+('4', '3201234567890001', 10000.00, '2026-01-05', 'Transfer', 'Verified'),
+('5', '3201234567890001', 25000.00, '2026-02-03', 'Transfer', 'Verified'),
+('6', '3201234567890001', 30000.00, '2026-02-03', 'Transfer', 'Verified'),
+('7', '3201234567890001', 50000.00, '2026-02-03', 'Transfer', 'Verified'),
+('8', '3201234567890001', 10000.00, '2026-02-03', 'Transfer', 'Verified'),
+('9', '3201234567890001', 25000.00, '2026-03-01', 'Transfer', 'Verified'),
+('10', '3201234567890001', 30000.00, '2026-03-01', 'Transfer', 'Verified'),
+('11', '3201234567890001', 50000.00, '2026-03-01', 'Transfer', 'Verified'),
+('12', '3201234567890001', 10000.00, '2026-03-01', 'Transfer', 'Verified'),
+('13', '3201234567890002', 25000.00, '2026-01-10', 'Cash', 'Verified'),
+('14', '3201234567890002', 30000.00, '2026-01-10', 'Cash', 'Verified'),
+('15', '3201234567890002', 50000.00, '2026-01-10', 'Cash', 'Verified'),
+('16', '3201234567890002', 10000.00, '2026-01-10', 'Cash', 'Verified');
 
 -- Insert Kas RT
 INSERT INTO `kas_rt` (`jenis`, `kategori`, `jumlah`, `keterangan`, `tanggal`) VALUES
@@ -493,15 +489,15 @@ INSERT INTO `kegiatan` (`judul`, `isi`, `tanggal`, `waktu`, `lokasi`, `status`) 
 
 -- Insert Surat Pengantar
 INSERT INTO `surat_pengantar` (`id_warga`, `jenis_surat`, `keperluan`, `tanggal_pengajuan`, `status`) VALUES
-(1, 'Surat Domisili', 'Untuk keperluan pembuatan KTP', '2026-04-05', 'Selesai'),
-(3, 'Surat Keterangan', 'Untuk keperluan melamar pekerjaan', '2026-04-10', 'Approved_Admin'),
-(5, 'Surat Usaha', 'Untuk keperluan membuka usaha warung', '2026-04-12', 'Pending');
+('3201234567890001', 'Surat Domisili', 'Untuk keperluan pembuatan KTP', '2026-04-05', 'Selesai'),
+('3201234567890003', 'Surat Keterangan', 'Untuk keperluan melamar pekerjaan', '2026-04-10', 'Pending'),
+('3201234567890005', 'Surat Usaha', 'Untuk keperluan membuka usaha warung', '2026-04-12', 'Pending');
 
 -- Insert Pengaduan
 INSERT INTO `pengaduan` (`id_warga`, `judul`, `isi`, `kategori`, `status`, `tanggal_pengaduan`, `respon`) VALUES
-(1, 'Lampu Jalan Mati', 'Lampu jalan di depan rumah nomor 1 sudah mati selama 3 hari', 'Keamanan', 'Selesai', '2026-04-01', 'Terima kasih atas informasinya, lampu akan segera diperbaiki oleh petugas kami.'),
-(2, 'Sampah Menumpuk', 'Tempat sampah di ujung gang sudah penuh dan berbau', 'Kebersihan', 'Diproses', '2026-04-10', 'Sedang dalam proses penanganan'),
-(5, 'Banner Rusak', 'Banner Kegiatan RT di depan gang sudah robek', 'Fasilitas', 'Dikirim', '2026-04-15', NULL);
+('3201234567890001', 'Lampu Jalan Mati', 'Lampu jalan di depan rumah nomor 1 sudah mati selama 3 hari', 'Keamanan', 'Selesai', '2026-04-01', 'Terima kasih atas informasinya, lampu akan segera diperbaiki oleh petugas kami.'),
+('3201234567890002', 'Sampah Menumpuk', 'Tempat sampah di ujung gang sudah penuh dan berbau', 'Kebersihan', 'Diproses', '2026-04-10', 'Sedang dalam proses penanganan'),
+('3201234567890005', 'Banner Rusak', 'Banner Kegiatan RT di depan gang sudah robek', 'Fasilitas', 'Dikirim', '2026-04-15', NULL);
 
 -- Insert Notifikasi
 INSERT INTO `notifikasi` (`id_user`, `judul`, `isi`, `jenis`) VALUES
@@ -509,20 +505,6 @@ INSERT INTO `notifikasi` (`id_user`, `judul`, `isi`, `jenis`) VALUES
 (2, 'Pengumuman Baru', 'Jadwal Ronda Malam Bulan April 2026 telah dipublikasikan', 'Pengumuman'),
 (3, 'Surat Disetujui', 'Surat Keterangan Anda telah disetujui oleh Ketua RT', 'Surat');
 
--- Insert Forum Topik
-INSERT INTO `forum_topik` (`id_user`, `judul`, `isi`, `views`, `jumlah_komentar`, `status`) VALUES
-(1, 'Jadwal Ronda Bulan Juni', 'Mohon bantuan untuk menyusun jadwal ronda bulan Juni 2026. Silakan komentari jadwal di bawah ini.', 45, 3, 'Published'),
-(3, 'Permasalahan Parkir di Gang', 'Baru-baru ini sering terjadi masalah parkir di gang kami. Ada yang bisa disarankan?', 78, 5, 'Published'),
-(5, 'Saran Pembuatan Bank Sampah', 'Apakah warga berkenan membuat bank sampah di RT kita?', 120, 8, 'Published');
 
--- Insert Forum Balasan
-INSERT INTO `forum_komentar` (`id_topik`, `id_user`, `isi`, `status`) VALUES
-(1, 2, 'Saya bersedia ronda tanggal 5 dan 10 Juni', 'Published'),
-(1, 3, 'Saya tanggal 12 dan 15 ya', 'Published'),
-(1, 4, 'Saya bisa tanggal 20 dan 25', 'Published'),
-(2, 1, 'Sebaiknya dibuat marka parkir agar jelas batasannya', 'Published'),
-(2, 2, 'Mungkin perlu ada sosialisasi lagi kepada warga', 'Published'),
-(3, 2, 'Ide yang bagus, saya dukung penuh!', 'Published'),
-(3, 3, 'Bank sampah sangat diperlukan untuk lingkungan bersih', 'Published');
 
 COMMIT;

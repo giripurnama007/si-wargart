@@ -30,8 +30,8 @@ class PengaturanController {
         // Get user list
         $stmt = $this->db->query("
             SELECT u.*, w.nik 
-            FROM users u 
-            LEFT JOIN warga w ON u.id_warga = w.id 
+            FROM users u
+            LEFT JOIN warga w ON u.id_warga = w.nik
             ORDER BY u.role, u.nama
         ");
         $users = $stmt->fetchAll();
@@ -137,7 +137,7 @@ class PengaturanController {
                     redirect('/pengaturan');
                 }
                 
-                $id_warga = $warga['id'];
+                $id_warga = $nik;
 
                 $stmt = $this->db->prepare("SELECT id FROM users WHERE id_warga = ?");
                 $stmt->execute([$id_warga]);
@@ -190,7 +190,7 @@ class PengaturanController {
                     redirect('/pengaturan');
                 }
                 
-                $id_warga = $warga['id'];
+                $id_warga = $nik;
 
                 $stmt = $this->db->prepare("SELECT id FROM users WHERE id_warga = ? AND id != ?");
                 $stmt->execute([$id_warga, $id]);
@@ -268,8 +268,8 @@ class PengaturanController {
 
             // Jika diaktifkan, dan role warga, aktifkan juga status warga di tabel warga
             if ($new_status == 1 && $user['role'] === 'warga' && $user['id_warga']) {
-                $stmtWarga = $this->db->prepare("UPDATE warga SET status_warga = 'Aktif' WHERE id = ? AND status_warga = 'Non-Aktif'");
-                $stmtWarga->execute([$user['id_warga']]);
+                $stmtWarga = $this->db->prepare("UPDATE warga SET status_warga = 'Aktif' WHERE nik = ? AND status_warga = 'Non-Aktif'");
+                $stmtWarga->execute([$user['id_warga']]); // id_warga is now NIK
             }
 
             $status_text = $new_status ? 'diaktifkan' : 'dinonaktifkan';

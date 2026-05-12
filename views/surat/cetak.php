@@ -78,17 +78,21 @@
 
     <div class="footer">
         <div class="signature">
-            <p>Kota, <?= formatTanggal($surat['approved_at_admin'] ?? date('Y-m-d')) ?></p>
+            <p>Kota, <?= formatTanggal($surat['approved_at_ketua'] ?? date('Y-m-d')) ?></p>
             <p>Ketua <?= $surat['nama_rt'] ?> <?= $surat['nama_rw'] ?></p>
             <p class="name"><?= $surat['nama_ketua_rt'] ?></p>
         </div>
     </div>
 
     <div style="clear: both;"></div>
-    <div class="qrcode" style="text-align: center; margin-top: 30px;">
-        <img src="<?= BASE_URL ?>uploads/pembayaran/<?= $surat['qrcode'] ?>" width="100">
-        <p style="font-size: 8pt;">Scan untuk validasi</p>
-    </div>
+    <?php if (!empty($surat['qrcode'])): ?>
+        <div class="qrcode" style="text-align: center; margin-top: 30px;">
+            <img src="<?= BASE_URL ?>uploads/qrcodes/<?= $surat['qrcode'] ?>" width="100">
+            <p style="font-size: 8pt;">Scan untuk validasi</p>
+        </div>
+    <?php else: ?>
+        <!-- QR Code tidak tersedia atau gagal dibuat -->
+    <?php endif; ?>
 
     <script>window.onload = function() { window.print(); }</script>
 </body>

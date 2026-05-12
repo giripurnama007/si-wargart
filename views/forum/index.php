@@ -30,6 +30,9 @@ $role = $_SESSION['role'] ?? '';
                         </div>
                         <h3 class="widget-user-username font-weight-bold ml-5">
                             <a href="<?= route_url('forum/detail', ['id' => $t['id']]) ?>" class="text-dark"><?= $t['judul'] ?></a>
+                            <?php if ($t['status'] === 'Archived'): ?>
+                                <span class="badge badge-secondary ml-2">Ditutup</span>
+                            <?php endif; ?>
                         </h3>
                         <h5 class="widget-user-desc ml-5">
                             Oleh: <?= $t['pembuat'] ?> | <i class="far fa-clock"></i> <?= formatTanggal($t['created_at'], 'd M Y H:i') ?>

@@ -150,6 +150,6 @@ Setelah instalasi database, Anda dapat login menggunakan akun-akun berikut:
 
 ---
 
-Selamat menggunakan SI-WargaRT! Jika ada pertanyaan atau masalah, silakan hubungi pengembang.
+Selamat menggunakan SI-WargaRT! Jika ada pertanyaan atau masalah, silakan hubungi pengembang. z
 
 ---

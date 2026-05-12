@@ -607,8 +607,6 @@ function getStatusBadge($status) {
         'Draft' => 'secondary',
         'Published' => 'success',
         'Archived' => 'secondary',
-        'Approved_Ketua' => 'info',
-        'Approved_Admin' => 'success',
         'Akan Datang' => 'primary',
         'Sedang Berlangsung' => 'success',
         'Dibatalkan' => 'danger'

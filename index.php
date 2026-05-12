@@ -157,6 +157,7 @@ $routes = [
     'forum/detail'          => ['controller' => 'Forum', 'method' => 'detail'],
     'forum/proses_komentar' => ['controller' => 'Forum', 'method' => 'proses_komentar'],
     'forum/hapus'           => ['controller' => 'Forum', 'method' => 'hapus'],
+    'forum/archive'         => ['controller' => 'Forum', 'method' => 'archive'],
 
     // Pengaturan
     'pengaturan'            => ['controller' => 'Pengaturan', 'method' => 'index'],

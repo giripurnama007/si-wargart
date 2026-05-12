@@ -333,13 +333,13 @@ class AuthController {
                 // Jika warga belum ada, tambahkan ke tabel warga dengan status Non-Aktif
                 $stmt = $this->db->prepare("INSERT INTO warga (nik, no_kk, nama_lengkap, jenis_kelamin, email, no_hp, status_warga) VALUES (?, ?, ?, ?, ?, ?, 'Non-Aktif')");
                 $stmt->execute([$nik, $no_kk, $nama, $jenis_kelamin, $email, $no_hp]);
-                $id_warga = $this->db->lastInsertId();
+                $id_warga = $nik;
             } else {
-                $id_warga = $warga['id'];
+                $id_warga = $nik;
                 
                 // Cek apakah id_warga sudah digunakan oleh akun lain
                 $stmt = $this->db->prepare("SELECT id FROM users WHERE id_warga = ?");
-                $stmt->execute([$id_warga]);
+                $stmt->execute([$nik]);
                 if ($stmt->fetch()) {
                     setFlash('error', 'NIK ini sudah memiliki akun terdaftar!');
                     redirect('auth/register');
@@ -376,8 +376,8 @@ class AuthController {
         $userId = $_SESSION['user_id'];
         $stmt = $this->db->prepare("
             SELECT u.*, w.nik, w.no_kk 
-            FROM users u
-            LEFT JOIN warga w ON u.id_warga = w.id
+            FROM users u 
+            LEFT JOIN warga w ON u.id_warga = w.nik
             WHERE u.id = ?
         ");
         $stmt->execute([$userId]);
@@ -445,8 +445,8 @@ class AuthController {
             $stmt->execute([$nama, $email, $no_hp, $fotoName, $userId]);
 
             if ($_SESSION['role'] === 'warga' && !empty($_SESSION['id_warga'])) {
-                $stmt = $this->db->prepare("UPDATE warga SET foto = ? WHERE id = ?");
-                $stmt->execute([$fotoName, $_SESSION['id_warga']]);
+                $stmt = $this->db->prepare("UPDATE warga SET foto = ? WHERE nik = ?");
+                $stmt->execute([$fotoName, $_SESSION['id_warga']]); // id_warga in session is NIK
             }
 
             // Change password if provided

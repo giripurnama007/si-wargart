@@ -33,17 +33,15 @@ class SuratController {
 
         if ($user['role'] === 'warga') {
             $id_warga = $user['id_warga'] ?? 0;
-            $where .= " AND s.id_warga = $id_warga";
+            $where .= " AND s.id_warga = " . $this->db->quote($id_warga);
         }
 
         $stmt = $this->db->query("
             SELECT s.*, w.nama_lengkap, w.nik, w.alamat,
-                   k.nama as approved_ketua_name,
-                   a.nama as approved_admin_name
+                   k.nama as approved_ketua_name
             FROM surat_pengantar s
-            INNER JOIN warga w ON s.id_warga = w.id
+            INNER JOIN warga w ON s.id_warga = w.nik
             LEFT JOIN users k ON s.approved_by_ketua = k.id
-            LEFT JOIN users a ON s.approved_by_admin = a.id
             $where
             ORDER BY s.tanggal_pengajuan DESC, s.created_at DESC
         ");
@@ -63,7 +61,7 @@ class SuratController {
         $user = getCurrentUser();
 
         // Get warga for this user
-        $stmt = $this->db->prepare("SELECT * FROM warga WHERE id = ?");
+        $stmt = $this->db->prepare("SELECT * FROM warga WHERE nik = ?");
         $warga = null;
         if ($user['role'] === 'warga' && isset($user['id_warga'])) {
             $stmt->execute([$user['id_warga']]);
@@ -110,13 +108,13 @@ class SuratController {
 
             // Get warga id
             $id_warga = null;
-            if ($user['role'] === 'warga' && isset($user['id_warga'])) {
-                $id_warga = (int)$user['id_warga'];
+            if ($user['role'] === 'warga') {
+                $id_warga = $user['id_warga'];
             } else {
-                $id_warga = (int)($_POST['id_warga'] ?? 0);
+                $id_warga = $_POST['id_warga'] ?? null;
             }
 
-            if (!$id_warga) {
+            if (empty($id_warga)) {
                 setFlash('error', 'Warga tidak ditemukan!');
                 redirect('/surat/aju');
             }
@@ -158,12 +156,10 @@ class SuratController {
 
         $stmt = $this->db->prepare("
             SELECT s.*, w.nama_lengkap, w.nik, w.alamat, w.rt, w.rw, w.tempat_lahir, w.tanggal_lahir,
-                   k.nama as approved_ketua_name,
-                   a.nama as approved_admin_name
+                   k.nama as approved_ketua_name
             FROM surat_pengantar s
-            INNER JOIN warga w ON s.id_warga = w.id
+            INNER JOIN warga w ON s.id_warga = w.nik
             LEFT JOIN users k ON s.approved_by_ketua = k.id
-            LEFT JOIN users a ON s.approved_by_admin = a.id
             WHERE s.id = ?
         ");
         $stmt->execute([$id]);
@@ -174,7 +170,7 @@ class SuratController {
             redirect('/surat');
         }
 
-        if ($user['role'] === 'warga' && $surat['id_warga'] != ($user['id_warga'] ?? 0)) {
+        if ($user['role'] === 'warga' && $surat['id_warga'] != ($user['id_warga'] ?? null)) {
             setFlash('error', 'Anda tidak memiliki akses ke surat ini!');
             redirect('/surat');
         }
@@ -210,33 +206,46 @@ class SuratController {
                 redirect('/surat');
             }
 
-            if ($action === 'approve_ketua') {
+            if ($action === 'approve') {
                 requireRole(['ketua_rt', 'admin']);
 
-                $stmt = $this->db->prepare("
-                    UPDATE surat_pengantar SET status = 'Approved_Ketua', approved_by_ketua = ?, approved_at_ketua = NOW()
-                    WHERE id = ?
-                ");
-                $stmt->execute([$_SESSION['user_id'], $id]);
-
-                logActivity('Approve surat oleh Ketua RT #' . $id, 'Surat');
-                setFlash('success', 'Surat berhasil disetujui!');
-            } elseif ($action === 'approve_admin') {
-                requireRole(['admin']);
+                // Fetch Warga data for QR code generation
+                $stmt_warga = $this->db->prepare("SELECT w.nik, w.nama_lengkap FROM surat_pengantar s INNER JOIN warga w ON s.id_warga = w.nik WHERE s.id = ?");
+                $stmt_warga->execute([$id]);
+                $warga = $stmt_warga->fetch();
+                if (!$warga) {
+                    setFlash('error', 'Data warga untuk surat ini tidak ditemukan! QR Code tidak dapat dibuat.');
+                    redirect('/surat/detail?id=' . $id);
+                }
 
                 // Generate nomor surat
-                $no_surat = '001/SK/' . date('Y');
-                $stmt = $this->db->prepare("SELECT COUNT(*) as total FROM surat_pengantar WHERE YEAR(tanggal_pengajuan) = YEAR(NOW())");
+                $stmt = $this->db->prepare("SELECT COUNT(*) as total FROM surat_pengantar WHERE YEAR(tanggal_pengajuan) = YEAR(NOW()) AND no_surat IS NOT NULL");
                 $stmt->execute();
                 $count = $stmt->fetch()['total'] + 1;
                 $no_surat = str_pad($count, 3, '0', STR_PAD_LEFT) . '/SK/' . date('Y');
 
-                // Generate QR Code
-                $qrData = 'SI-WargaRT|Surat:' . $no_surat . '|Nik:' . $surat['nik'];
-                $qrFile = 'qr_' . time() . '.png';
+                // --- QR Code Generation ---
+                // NOTE: This requires the 'phpqrcode' library.
+                // Please download it and place it in the 'helpers/phpqrcode/' directory.
+                $qrLibPath = HELPERPATH . 'phpqrcode/qrlib.php';
+                if (file_exists($qrLibPath)) {
+                    require_once $qrLibPath;
+
+                    $qrDir = BASEPATH . 'uploads/qrcodes/';
+                    if (!is_dir($qrDir)) {
+                        mkdir($qrDir, 0755, true);
+                    }
+                    $qrFile = 'qr_surat_' . time() . '_' . $id . '.png';
+                    $qrPath = $qrDir . $qrFile;
+                    $qrData = "No. Surat: {$no_surat}\nNIK: {$warga['nik']}\nNama: {$warga['nama_lengkap']}\nJenis: {$surat['jenis_surat']}";
+                    QRcode::png($qrData, $qrPath, QR_ECLEVEL_L, 3);
+                } else {
+                    $qrFile = null; // Set to null if library is not found
+                    logActivity('Persetujuan surat #' . $id . ' gagal membuat QR Code: library phpqrcode tidak ditemukan.', 'Surat');
+                }
 
                 $stmt = $this->db->prepare("
-                    UPDATE surat_pengantar SET status = 'Selesai', approved_by_admin = ?, approved_at_admin = NOW(), no_surat = ?, qrcode = ?
+                    UPDATE surat_pengantar SET status = 'Selesai', approved_by_ketua = ?, approved_at_ketua = NOW(), no_surat = ?, qrcode = ?
                     WHERE id = ?
                 ");
                 $stmt->execute([$_SESSION['user_id'], $no_surat, $qrFile, $id]);
@@ -244,16 +253,16 @@ class SuratController {
                 // Create notification for warga
                 $stmt = $this->db->prepare("
                     INSERT INTO notifikasi (id_user, judul, isi, jenis, link)
-                    SELECT id, 'Surat Selesai', 'Surat pengantar Anda sudah selesai dan siap diambil', 'Surat', '/surat/detail?id=$id'
-                    FROM users WHERE role = 'warga' AND id_warga = ?
+                    SELECT u.id, 'Surat Selesai', 'Surat pengantar Anda sudah selesai dan siap dicetak.', 'Surat', ?
+                    FROM users u WHERE u.id_warga = ?
                 ");
-                $stmt->execute([$surat['id_warga']]);
+                $link = '/surat/detail?id=' . $id;
+                $stmt->execute([$link, $surat['id_warga']]);
 
-                logActivity('Approve surat oleh Admin #' . $id . ' No: ' . $no_surat, 'Surat');
+                logActivity('Approve surat #' . $id . ' No: ' . $no_surat, 'Surat');
                 setFlash('success', 'Surat berhasil disetujui dan selesai!');
             } elseif ($action === 'reject') {
                 requireRole(['admin', 'ketua_rt']);
-
                 $keterangan = sanitize($_POST['keterangan'] ?? '');
                 $stmt = $this->db->prepare("UPDATE surat_pengantar SET status = 'Rejected', keterangan = ? WHERE id = ?");
                 $stmt->execute([$keterangan, $id]);
@@ -270,7 +279,7 @@ class SuratController {
                 setFlash('warning', 'Surat ditolak!');
             }
 
-            redirect('/surat');
+            redirect('/surat/detail?id=' . $id);
         }
 
         redirect('/surat');
@@ -287,7 +296,7 @@ class SuratController {
             SELECT s.*, w.nama_lengkap, w.nik, w.alamat, w.rt, w.rw, w.tempat_lahir, w.tanggal_lahir, w.jenis_kelamin,
                    p.nama_rt, p.nama_rw, p.nama_ketua_rt, p.alamat as alamat_rt, p.no_telepon
             FROM surat_pengantar s
-            INNER JOIN warga w ON s.id_warga = w.id
+            INNER JOIN warga w ON s.id_warga = w.nik
             CROSS JOIN pengaturan p
             WHERE s.id = ?
         ");
@@ -299,7 +308,7 @@ class SuratController {
             redirect('/surat');
         }
 
-        if ($user['role'] === 'warga' && $surat['id_warga'] != ($user['id_warga'] ?? 0)) {
+        if ($user['role'] === 'warga' && $surat['id_warga'] != ($user['id_warga'] ?? null)) {
             setFlash('error', 'Anda tidak memiliki akses ke surat ini!');
             redirect('/surat');
         }

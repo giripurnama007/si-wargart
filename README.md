@@ -1,245 +1,157 @@
-# SI-WargaRT
+# SI-WargaRT (Sistem Informasi Warga RT)
 
-**Sistem Informasi Warga RT** - Aplikasi administrasi pemerintahan tingkat RT/RW berbasis web.
+Aplikasi web administrasi pemerintahan tingkat RT/RW yang dibangun menggunakan PHP Native (tanpa framework), MySQL, AdminLTE v3, Bootstrap 5, jQuery, dan AJAX. Aplikasi ini dirancang untuk memudahkan pengelolaan data warga, iuran, pengumuman, kegiatan, surat pengantar, pengaduan, dan laporan di lingkungan RT/RW.
 
-## Fitur Utama
+## Fitur Aplikasi
 
-- **Authentication** - Login multi role (Admin, Ketua RT, Warga)
-- **Dashboard** - Statistik dan grafik kas RT
-- **Data Warga** - CRUD lengkap dengan fitur import/export
-- **Iuran RT** - Generate tagihan, pembayaran, verifikasi
-- **Kas RT** - Pencatatan kas masuk dan keluar
-- **Pengumuman** - Manajemen pengumuman dan kegiatan
-- **Surat Pengantar** - Pengajuan dan approval surat online
-- **Pengaduan** - Sistem pengaduan warga
-- **Laporan** - Laporan kas, iuran, dan tunggakan
+1.  **Authentication**:
+    *   Login multi-role (Admin, Ketua RT, Warga).
+    *   Session login dan logout.
+    *   Middleware role access.
+    *   Registrasi warga baru dengan validasi Admin.
 
-## Teknologi
+2.  **Dashboard**:
+    *   Menampilkan total warga, total KK, total iuran masuk, total tunggakan.
+    *   Statistik pembayaran dan grafik kas RT (menggunakan Chart.js).
+    *   Pengumuman dan kegiatan terbaru.
 
-- PHP Native ( tanpa framework )
-- MySQL Database
-- AdminLTE v3
-- Bootstrap 5
-- JQuery + AJAX
-- DataTables
-- SweetAlert2
-- Chart.js
-- QRCode Generator
+3.  **Data Warga**:
+    *   CRUD lengkap (Tambah, Edit, Hapus, Detail).
+    *   Field: NIK, No KK, Nama lengkap, Tempat/Tanggal lahir, Jenis kelamin, Agama, Status perkawinan, Pekerjaan, No HP, Email, Alamat, RT/RW, Foto warga, Foto rumah, Status warga.
+    *   Upload foto warga.
+    *   QRCode profil warga.
+    *   Import/Export data warga via Excel.
+    *   Export data warga ke PDF.
 
-## Instalasi
+4.  **Kartu Keluarga (KK)**:
+    *   CRUD lengkap (Tambah, Edit, Hapus, Detail).
+    *   Menampilkan daftar anggota keluarga yang terhubung.
 
-### 1. Persyaratan
-- PHP 7.4+ atau PHP 8.x
-- MySQL 5.7+ atau MariaDB 10.3+
-- Web Server (Apache/Nginx) atau Laragon/XAMPP
+5.  **Iuran RT**:
+    *   Generate tagihan bulanan (Kebersihan, Keamanan, Kas RT, Dana Sosial).
+    *   Input pembayaran (oleh Admin/Ketua RT) atau pengajuan pembayaran (oleh Warga).
+    *   Upload bukti transfer.
+    *   Verifikasi pembayaran oleh Admin/Ketua RT.
+    *   Status tagihan: Lunas, Pending, Menunggak.
+    *   Rekap bulanan dan riwayat pembayaran.
+    *   Cetak PDF riwayat iuran.
 
-### 2. Langkah Instalasi
+6.  **Kas RT**:
+    *   Pencatatan kas masuk dan kas keluar.
+    *   Filter berdasarkan bulan/tahun.
+    *   Laporan rekapitulasi kas.
 
-1. **Clone/Download** project ke folder web server
-   ```
-   G:\laragon\www\si-wargart
-   ```
+7.  **Pengumuman & Kegiatan**:
+    *   CRUD lengkap untuk Pengumuman dan Kegiatan RT.
+    *   Field: Judul, Isi, Tanggal, Lokasi, Banner.
+    *   Detail kegiatan.
 
-2. **Import Database**
-   - Buka phpMyAdmin
-   - Buat database baru: `db_wargart`
-   - Import file `db_wargart.sql`
+8.  **Surat Pengantar**:
+    *   Pengajuan surat online (Domisili, Usaha, Pengantar Nikah, Keterangan).
+    *   Approval bertingkat (Ketua RT, Admin).
+    *   Generate PDF otomatis dengan QR Code validasi surat.
 
-3. **Konfigurasi Database**
-   - Edit file `config/database.php`
-   - Sesuaikan username, password, dan nama database
+9.  **Pengaduan Warga**:
+    *   Input pengaduan dengan upload foto.
+    *   Status pengaduan: Dikirim, Diproses, Selesai.
+    *   Balasan/respon dari Admin/Ketua RT.
 
-4. **Download Vendor Libraries**
-   - Download libraries berikut ke folder `assets/vendor/`:
+10. **Forum Warga**:
+    *   Warga dapat membuat topik diskusi baru.
+    *   Warga lain dapat mengirim pesan/komentar untuk berdiskusi.
+    *   Admin/Ketua RT dapat menghapus topik.
 
-   ```
-   assets/vendor/
-   ├── adminlte/
-   │   └── css/
-   │       └── adminlte.min.css
-   │   └── js/
-   │       └── adminlte.min.js
-   ├── bootstrap/
-   │   └── js/
-   │       └── bootstrap.bundle.min.js
-   ├── fontawesome-free/
-   │   └── css/
-   │       └── all.min.css
-   ├── jquery/
-   │   └── jquery.min.js
-   ├── datatables/
-   │   ├── jquery.dataTables.min.js
-   │   ├── dataTables.bootstrap4.min.css
-   │   ├── dataTables.bootstrap4.min.js
-   │   ├── dataTables.responsive.min.js
-   │   ├── responsive.bootstrap4.min.css
-   │   └── etc...
-   ├── sweetalert2/
-   │   └── sweetalert2.all.min.js
-   ├── chart.js/
-   │   └── Chart.min.js
-   ├── qrcodejs/
-   │   └── qrcode.min.js
-   └── etc...
-   ```
+11. **Laporan**:
+    *   Generate laporan kas masuk/keluar, rekap iuran, tunggakan warga.
+    *   Export laporan ke PDF.
+    *   Filter laporan berdasarkan tanggal/bulan.
 
-   Atau gunakan CDN di file `layouts/main_layout.php`.
+12. **Notifikasi**:
+    *   Sistem notifikasi untuk tagihan, pengumuman baru, surat selesai, pengaduan dibalas.
+    *   Toast notification dan badge notification.
 
-5. **Buat Folder Uploads**
-   ```
-   mkdir uploads/warga
-   mkdir uploads/pembayaran
-   mkdir uploads/pengaduan
-   ```
+13. **Keamanan**:
+    *   PDO / Prepared Statement untuk mencegah SQL Injection.
+    *   Validasi form dan sanitasi input.
+    *   Validasi upload file.
+    *   Session security.
+    *   CSRF Token sederhana.
 
-6. **Selesai!** Buka browser dan akses:
-   ```
-   http://localhost/si-wargart
-   ```
+## Teknologi yang Digunakan
 
-## Default Login
+*   **Backend**: PHP Native (tanpa framework), MySQL
+*   **Frontend**: HTML5, CSS3, JavaScript
+*   **UI Framework**: AdminLTE v3, Bootstrap 5
+*   **Interaktivitas**: jQuery, AJAX
+*   **Tabel Data**: DataTables
+*   **Notifikasi**: SweetAlert2
+*   **PDF Generation**: DomPDF
+*   **QR Code**: QRCode.js
+*   **Charts**: Chart.js
 
-| Role | Username | Password |
-|------|----------|----------|
-| Admin | admin | password |
-| Ketua RT | ketua | password  |
-| Warga | warga | password  |
+## Instalasi (Menggunakan Laragon)
 
-## Struktur Folder
+Ikuti langkah-langkah berikut untuk menjalankan aplikasi di lingkungan Laragon:
 
-```
-si-wargart/
-├── assets/
-│   ├── css/
-│   │   └── style.css
-│   ├── js/
-│   │   └── app.js
-│   ├── img/
-│   │   └── logo.png
-│   └── vendor/          # Third-party libraries
-├── config/
-│   └── database.php
-├── controllers/
-│   ├── AuthController.php
-│   ├── DashboardController.php
-│   ├── WargaController.php
-│   ├── IuranController.php
-│   ├── KasController.php
-│   ├── PengumumanController.php
-│   ├── KegiatanController.php
-│   ├── SuratController.php
-│   ├── PengaduanController.php
-│   ├── LaporanController.php
-│   ├── PengaturanController.php
-│   ├── NotifikasiController.php
-│   └── KKController.php
-├── helpers/
-│   └── functions.php
-├── layouts/
-│   └── main_layout.php
-├── models/
-├── modules/
-├── uploads/
-│   ├── warga/
-│   ├── pembayaran/
-│   └── pengaduan/
-├── views/
-│   ├── auth/
-│   ├── dashboard/
-│   ├── warga/
-│   ├── iuran/
-│   ├── kas/
-│   ├── pengumuman/
-│   ├── kegiatan/
-│   ├── surat/
-│   ├── pengaduan/
-│   ├── laporan/
-│   ├── pengaturan/
-│   ├── notifikasi/
-│   └── kk/
-├── vendor/
-├── db_wargart.sql
-├── .htaccess
-├── index.php
-└── README.md
-```
+1.  **Download Proyek**:
+    *   Unduh seluruh folder proyek `si-wargart` ke direktori `G:\laragon\www\`.
+    *   Pastikan struktur folder menjadi `G:\laragon\www\si-wargart`.
 
-## Routing
+2.  **Konfigurasi Database**:
+    *   Buka Laragon, pastikan Apache dan MySQL berjalan.
+    *   Buka phpMyAdmin (biasanya melalui menu Laragon -> `Database -> phpMyAdmin`).
+    *   Buat database baru dengan nama `db_wargart`.
+    *   Import file `db_wargart.sql` yang ada di root folder proyek (`G:\laragon\www\si-wargart\db_wargart.sql`) ke database `db_wargart` yang baru Anda buat.
+    *   Pastikan user database adalah `root` dengan password kosong (default Laragon). Jika tidak, sesuaikan di `config/database.php`.
 
-| URL | Controller | Method |
-|-----|------------|--------|
-| /dashboard | DashboardController | index |
-| /warga | WargaController | index |
-| /warga/tambah | WargaController | tambah |
-| /warga/edit | WargaController | edit |
-| /warga/hapus | WargaController | hapus |
-| /warga/detail | WargaController | detail |
-| /iuran | IuranController | index |
-| /iuran/generate | IuranController | generate |
-| /iuran/pembayaran | IuranController | pembayaran |
-| /iuran/verifikasi | IuranController | verifikasi |
-| /kas | KasController | index |
-| /kas/masuk | KasController | masuk |
-| /kas/keluar | KasController | keluar |
-| /pengumuman | PengumumanController | index |
-| /kegiatan | KegiatanController | index |
-| /surat | SuratController | index |
-| /surat/aju | SuratController | aju |
-| /surat/detail | SuratController | detail |
-| /surat/cetak | SuratController | cetak |
-| /pengaduan | PengaduanController | index |
-| /laporan | LaporanController | index |
-| /laporan/kas | LaporanController | kas |
-| /laporan/iuran | LaporanController | iuran |
-| /laporan/tunggakan | LaporanController | tunggakan |
-| /pengaturan | PengaturanController | index |
-| /kk | KKController | index |
+3.  **Konfigurasi Aplikasi**:
+    *   Buka file `config/database.php`.
+    *   Pastikan konfigurasi database sudah sesuai:
+        ```php
+        define('DB_HOST', 'localhost');
+        define('DB_USER', 'root');
+        define('DB_PASS', ''); // Kosongkan jika tidak ada password
+        define('DB_NAME', 'db_wargart');
+        ```
+    *   Pastikan `BASE_URL` terdeteksi otomatis. Jika ada masalah, Anda bisa mengaturnya secara manual:
+        ```php
+        // Contoh manual jika Laragon membuat domain lokal:
+        // define('BASE_URL', 'http://si-wargart.test/');
+        // Atau jika diakses via localhost/folder:
+        // define('BASE_URL', 'http://localhost/si-wargart/');
+        ```
 
-## Database Schema
+4.  **Akses Aplikasi**:
+    *   Buka browser Anda dan akses URL proyek. Jika Anda menggunakan Laragon, biasanya akan otomatis terdaftar sebagai `http://si-wargart.test` atau `http://localhost/si-wargart`.
 
-### Tabel Utama
+## Akun Default
 
-- `users` - Data user/login
-- `warga` - Data warga
-- `kartu_keluarga` - Data KK
-- `jenis_iuran` - Jenis iuran
-- `tagihan_iuran` - Tagihan bulanan
-- `pembayaran` - Pembayaran iuran
-- `kas_rt` - Kas masuk/keluar
-- `pengumuman` - Pengumuman
-- `kegiatan` - Kegiatan RT
-- `surat_pengantar` - Surat pengantar
-- `pengaduan` - Pengaduan warga
-- `notifikasi` - Notifikasi sistem
-- `pengaturan` - Pengaturan aplikasi
-- `activity_log` - Log aktivitas
+Setelah instalasi database, Anda dapat login menggunakan akun-akun berikut:
 
-## Fitur Tambahan
+*   **Admin**:
+    *   Username: `admin`
+    *   Password: `admin123`
+*   **Ketua RT**:
+    *   Username: `ketua`
+    *   Password: `ketua123`
+*   **Warga**:
+    *   Username: `warga`
+    *   Password: `warga123`
 
-### Import/Export
-- Import data warga dari CSV
-- Export data warga ke CSV
-- Export laporan ke PDF
+*(Catatan: Untuk akun warga, Anda mungkin perlu membuat akun baru melalui halaman registrasi dengan NIK yang valid dari data dummy, lalu mengaktifkannya melalui menu Pengaturan Admin, karena akun 'warga' default mungkin tidak tertaut dengan `id_warga`.)*
 
-### QRCode
-- QRCode profil warga
-- QRCode validasi surat
+## Troubleshooting
 
-### Notifikasi
-- Notifikasi tagihan
-- Notifikasi pengumuman
-- Toast notification
+*   **"404 Not Found"**: Pastikan konfigurasi Nginx Anda sudah benar untuk *rewrite rules* (jika menggunakan Nginx secara manual, bukan Laragon). Laragon biasanya sudah mengaturnya secara otomatis. Atau periksa kembali `BASE_URL` di `config/database.php`.
+*   **"Database Connection Failed"**: Periksa `DB_HOST`, `DB_USER`, `DB_PASS`, dan `DB_NAME` di `config/database.php`. Pastikan MySQL di Laragon sudah berjalan.
+*   **"Incorrect Column Count" pada DataTables**: Ini biasanya terjadi jika ada ketidaksesuaian jumlah `<th>` di `<thead>` dan `<td>` di `<tbody>` pada tabel HTML. Pastikan jumlahnya sama.
+*   **"Deprecated: strtotime(): Passing null..."**: Pastikan semua fungsi yang memproses tanggal memiliki validasi `empty()` atau `null` sebelum memanggil `strtotime()`.
+*   **Link tidak berfungsi**: Pastikan semua URL di *views* menggunakan `nginx_url()` atau `route_url()` untuk navigasi antar halaman, dan `BASE_URL` hanya untuk aset statis (gambar, CSS, JS).
 
-### Keamanan
-- Prepared statements (PDO)
-- Input sanitization
-- CSRF token
-- Session management
+---
 
-## Lisensi
+Selamat menggunakan SI-WargaRT! Jika ada pertanyaan atau masalah, silakan hubungi pengembang.
 
-MIT License - Bebas digunakan untuk keperluan apapun.
+---
 
-## Kontak
-
-Untuk pertanyaan atau bantuan, silakan hubungi developer.
+**Generated by Gemini Code Assist**
